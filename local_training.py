@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score
 
 
 def load_client_data(client_id):
-    path = f"data/hospital_{client_id}.csv"
+    path = f"hospital_{client_id}.csv"
     if not os.path.exists(path):
         raise FileNotFoundError(f"No data found for client {client_id} at {path}")
 
