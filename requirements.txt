@@ -1,0 +1,6 @@
+flwr==1.17.0
+scikit-learn==1.6.1
+pandas==2.2.3
+numpy==2.2.4
+grpcio==1.71.0
+protobuf==4.25.6
