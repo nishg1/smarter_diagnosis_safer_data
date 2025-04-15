@@ -1,0 +1,41 @@
+C:\Users\meteh\anaconda3\Lib\site-packages\google\protobuf\internal\well_known_types.py:174: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  self.FromDatetime(datetime.datetime.utcnow())
+2025-04-15 14:45:06.622 Thread 'Thread-15 (start_federated_client)': missing ScriptRunContext
+Exception in thread Thread-15 (start_federated_client):
+Traceback (most recent call last):
+  File "C:\Users\meteh\anaconda3\Lib\site-packages\streamlit\runtime\state\session_state.py", line 398, in __getitem__
+    return self._getitem(widget_id, key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\meteh\anaconda3\Lib\site-packages\streamlit\runtime\state\session_state.py", line 443, in _getitem
+    raise KeyError
+KeyError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\meteh\anaconda3\Lib\site-packages\streamlit\runtime\state\session_state_proxy.py", line 119, in __getattr__
+    return self[key]
+           ~~~~^^^^^
+  File "C:\Users\meteh\anaconda3\Lib\site-packages\streamlit\runtime\state\session_state_proxy.py", line 90, in __getitem__
+    return get_session_state()[key]
+           ~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\meteh\anaconda3\Lib\site-packages\streamlit\runtime\state\safe_session_state.py", line 93, in __getitem__
+    return self._state[key]
+           ~~~~~~~~~~~^^^^^
+  File "C:\Users\meteh\anaconda3\Lib\site-packages\streamlit\runtime\state\session_state.py", line 400, in __getitem__
+    raise KeyError(_missing_key_error_message(key))
+KeyError: 'st.session_state has no key "user_id". Did you forget to initialize it? More info: https://docs.streamlit.io/library/advanced-features/session-state#initialization'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\meteh\anaconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "C:\Users\meteh\anaconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\meteh\OneDrive\Desktop\federated_learning_hospital_data\app.py", line 192, in start_federated_client
+    client = HospitalClient(st.session_state.user_id, st.session_state.username)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\meteh\anaconda3\Lib\site-packages\streamlit\runtime\state\session_state_proxy.py", line 121, in __getattr__
+    raise AttributeError(_missing_attr_error_message(key))
+AttributeError: st.session_state has no attribute "user_id". Did you forget to initialize it? More info: https://docs.streamlit.io/library/advanced-features/session-state#initialization

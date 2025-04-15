@@ -1,0 +1,15 @@
+{"time":"2025-04-15T15:25:25.9154447-07:00","level":"INFO","msg":"stream: starting","core version":"0.19.9","symlink path":"C:\\Users\\meteh\\OneDrive\\Desktop\\federated_learning_hospital_data\\wandb\\run-20250415_152525-kndxxcgk\\logs\\debug-core.log"}
+{"time":"2025-04-15T15:25:26.1652485-07:00","level":"INFO","msg":"created new stream","id":"kndxxcgk"}
+{"time":"2025-04-15T15:25:26.1652485-07:00","level":"INFO","msg":"stream: started","id":"kndxxcgk"}
+{"time":"2025-04-15T15:25:26.1652485-07:00","level":"INFO","msg":"writer: Do: started","stream_id":"kndxxcgk"}
+{"time":"2025-04-15T15:25:26.1652485-07:00","level":"INFO","msg":"handler: started","stream_id":"kndxxcgk"}
+{"time":"2025-04-15T15:25:26.1652485-07:00","level":"INFO","msg":"sender: started","stream_id":"kndxxcgk"}
+{"time":"2025-04-15T15:25:26.3439578-07:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-04-15T15:25:58.08688-07:00","level":"INFO","msg":"stream: closing","id":"kndxxcgk"}
+{"time":"2025-04-15T15:25:58.08688-07:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-04-15T15:25:58.08688-07:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-04-15T15:25:58.5833742-07:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-04-15T15:25:59.0587754-07:00","level":"INFO","msg":"handler: closed","stream_id":"kndxxcgk"}
+{"time":"2025-04-15T15:25:59.0587754-07:00","level":"INFO","msg":"sender: closed","stream_id":"kndxxcgk"}
+{"time":"2025-04-15T15:25:59.0587754-07:00","level":"INFO","msg":"writer: Close: closed","stream_id":"kndxxcgk"}
+{"time":"2025-04-15T15:25:59.0593747-07:00","level":"INFO","msg":"stream: closed","id":"kndxxcgk"}

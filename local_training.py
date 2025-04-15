@@ -6,13 +6,23 @@ from sklearn.metrics import accuracy_score
 
 
 
-def load_client_data(client_id):
-    path = f"hospital_{client_id}.csv"
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"No data found for client {client_id} at {path}")
+def load_client_data(file_path):
+    # Check if file exists
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+    
+    # Read the file based on its extension
+    if file_path.endswith('.csv'):
+        df = pd.read_csv(file_path)
+    elif file_path.endswith(('.xlsx', '.xls')):
+        df = pd.read_excel(file_path)
+    else:
+        raise ValueError(f"Unsupported file format: {file_path}")
 
-    df = pd.read_csv(path)
-
+    # Check if the required columns exist
+    if "target" not in df.columns:
+        raise ValueError("Data file must contain a 'target' column")
+    
     X = df.drop(columns=["target"]).values
     y = df["target"].values
 

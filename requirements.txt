@@ -1,6 +1,9 @@
-flwr==1.17.0
-scikit-learn==1.6.1
-pandas==2.2.3
-numpy==2.2.4
-grpcio==1.71.0
-protobuf==4.25.6
+flwr>=1.4.0
+wandb>=0.15.0
+scikit-learn>=1.0.0
+pandas>=1.0.0
+numpy>=1.20.0
+streamlit>=1.0.0
+flask>=2.0.0
+tqdm>=4.65.0
+requests>=2.28.0 

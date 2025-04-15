@@ -1,0 +1,40 @@
+C:\Users\meteh\anaconda3\Lib\site-packages\google\protobuf\internal\well_known_types.py:174: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  self.FromDatetime(datetime.datetime.utcnow())
+[93mWARNING [0m:   DEPRECATED FEATURE: flwr.server.start_server() is deprecated.
+	Instead, use the `flower-superlink` CLI command to start a SuperLink as shown below:
+
+		$ flower-superlink --insecure
+
+	To view usage and all available options, run:
+
+		$ flower-superlink --help
+
+	Using `start_server()` is deprecated.
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+
+[92mINFO [0m:      Starting Flower server, config: num_rounds=5, no round_timeout
+[92mINFO [0m:      Flower ECE: gRPC server running (5 rounds), SSL is disabled
+Exception in thread Thread-9 (start_flower_server):
+Traceback (most recent call last):
+  File "C:\Users\meteh\anaconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "C:\Users\meteh\anaconda3\Lib\threading.py", line 1010, in run
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://192.168.1.13:8080
+[33mPress CTRL+C to quit[0m
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\meteh\OneDrive\Desktop\federated_learning_hospital_data\federated_server.py", line 94, in start_flower_server
+    fl.server.start_server(
+  File "C:\Users\meteh\anaconda3\Lib\site-packages\flwr\server\app.py", line 248, in start_server
+    register_exit_handlers(
+  File "C:\Users\meteh\anaconda3\Lib\site-packages\flwr\common\exit_handlers.py", line 88, in register_exit_handlers
+    default_handler = signal.signal(sig, graceful_exit_handler)  # type: ignore
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\meteh\anaconda3\Lib\signal.py", line 58, in signal
+    handler = _signal.signal(_enum_to_int(signalnum), _enum_to_int(handler))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: signal only works in main thread of the main interpreter
