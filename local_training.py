@@ -9,14 +9,14 @@ from sklearn.impute import SimpleImputer
 
 def load_client_data(client_id):
     #path = f"hospital_{client_id}.csv"
-    path = "data/test_heart_disease_1.csv"
+    path = "data/train_heart_disease_1.csv"
     if not os.path.exists(path):
         raise FileNotFoundError(f"No data found for client {client_id} at {path}")
 
     df = pd.read_csv(path)
 
-    X = df.drop(columns=["target"]).values
     y = df["target"].values
+    X = df.drop(columns=["target"]).values
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 

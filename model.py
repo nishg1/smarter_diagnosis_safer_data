@@ -1,9 +1,9 @@
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import HistGradientBoostingClassifier
+import numpy as np
 
 def create_model():
-    model = LogisticRegression()
+    model = LogisticRegression(C=0.01, class_weight='balanced')
 
-    model.classes_ = np.arange(13)                      # e.g., [0, 1]
-    model.coef_ = np.zeros((13))  # shape: (n_classes, n_features)
-    model.intercept_ = np.zeros(n_classes if n_classes > 2 else 1)   
+    model.classes_ = np.arange(13)      
+    model.coef_ = np.zeros((2, 13)) 
+    model.intercept_ = np.zeros(2)   
