@@ -1,6 +1,10 @@
 flwr==1.17.0
-scikit-learn==1.6.1
-pandas==2.2.3
-numpy==2.2.4
 grpcio==1.71.0
+joblib==1.4.2
+numpy==2.2.4
+pandas==2.2.3
 protobuf==4.25.6
+pycryptodome==3.22.0
+requests==2.32.3
+scikit-learn==1.6.1
+scipy==1.15.2
