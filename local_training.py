@@ -3,11 +3,13 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
+from sklearn.impute import SimpleImputer
 
 
 
 def load_client_data(client_id):
-    path = f"hospital_{client_id}.csv"
+    #path = f"hospital_{client_id}.csv"
+    path = "data/test_heart_disease_1.csv"
     if not os.path.exists(path):
         raise FileNotFoundError(f"No data found for client {client_id} at {path}")
 
@@ -21,6 +23,10 @@ def load_client_data(client_id):
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
+
+    imputer = SimpleImputer(strategy='mean')
+    X_train = imputer.fit_transform(X_train)
+    X_test = imputer.fit_transform(X_test) 
 
     return X_train, X_test, y_train, y_test
 

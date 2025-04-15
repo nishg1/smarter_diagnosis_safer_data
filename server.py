@@ -1,7 +1,7 @@
 from flwr.server.strategy import FedAvg
 import flwr as fl
 import numpy as np
-from model.model import create_model
+from model import create_model
 
 class SaveModelStrategy(FedAvg):
     def __init__(self):
@@ -32,7 +32,8 @@ def main():
     model = create_model()
     model = set_model_params(model, global_params)
 
-    model.predict([""])
+    print(model.coef_)
+    print(model.intercept_)
 
 if __name__ == "__main__":
     main()
