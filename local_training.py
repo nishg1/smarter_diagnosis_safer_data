@@ -4,8 +4,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 
-from ucimlrepo import fetch_ucirepo
-
 
 
 def load_client_data(client_id):
@@ -17,14 +15,6 @@ def load_client_data(client_id):
 
     X = df.drop(columns=["target"]).values
     y = df["target"].values
-
-    # # fetch dataset
-    # heart_disease = fetch_ucirepo(id=45)
-
-    # X = heart_disease.data.features
-    # y = heart_disease.data.targets
-
-    # y = y['num'].apply(lambda x: 1 if x > 0 else 0) # convert to either 0 for no heart disease or 1 for heart disease
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
