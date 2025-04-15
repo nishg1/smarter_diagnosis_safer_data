@@ -6,4 +6,5 @@ def create_model():
 
     model.classes_ = np.arange(13)      
     model.coef_ = np.zeros((2, 13)) 
-    model.intercept_ = np.zeros(2)   
+    model.intercept_ = np.zeros(2)
+    return model   

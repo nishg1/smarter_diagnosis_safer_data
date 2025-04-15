@@ -7,6 +7,7 @@ class HospitalClient(fl.client.NumPyClient):
     def __init__(self, client_id):
         self.client_id = client_id
         self.model = create_model()
+        print("created client model")
         self.X_train, self.X_test, self.y_train, self.y_test = load_client_data(client_id)
 
     def get_parameters(self, config):
