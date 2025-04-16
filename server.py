@@ -1,38 +1,72 @@
-from flwr.server.strategy import FedAvg
-import flwr as fl
+from flask import Flask, request, jsonify
 import numpy as np
-from model.model import create_model
+import pandas as pd
+from model import HeartDiseaseModel
+import os
+from dotenv import load_dotenv
 
-class SaveModelStrategy(FedAvg):
-    def __init__(self):
-        super().__init__()
-        self.latest_parameters = None
+load_dotenv()
 
-    def aggregate_fit(self, rnd, results, failures):
-        aggregated_result = super().aggregate_fit(rnd, results, failures)
-        if aggregated_result is not None:
-            self.latest_parameters = aggregated_result[0]  # model parameters
-        return aggregated_result
+app = Flask(__name__)
 
+# Initialize the global model with test data
+global_model = HeartDiseaseModel('data/test_heart_disease.csv')
+client_weights = []
 
-def set_model_params(model, parameters):
-    model.coef_ = np.array(parameters[0])
-    model.intercept_ = np.array(parameters[1])
-    model.classes_ = np.array([0, 1])  # Make sure this matches your task
-    return model
+@app.route('/submit_weights', methods=['POST'])
+def submit_weights():
+    weights = request.json['weights']
+    client_weights.append(weights)
+    return jsonify({"status": "success"})
 
+def aggregate_weights():
+    if not client_weights:
+        return None
+    
+    # For Random Forest, we'll average the feature importances
+    avg_weights = {
+        'n_estimators': client_weights[0]['n_estimators'],
+        'max_depth': client_weights[0]['max_depth'],
+        'feature_importances': np.mean([w['feature_importances'] for w in client_weights], axis=0).tolist(),
+        'n_features': client_weights[0]['n_features'],
+        'n_classes': client_weights[0]['n_classes'],
+        'classes': client_weights[0]['classes']
+    }
+    
+    return avg_weights
 
-def main():
-    strategy = SaveModelStrategy()
+@app.route('/get_global_model', methods=['GET'])
+def get_global_model():
+    global global_model
+    new_weights = aggregate_weights()
+    if new_weights:
+        # Create a new model with the test data and set the aggregated weights
+        global_model = HeartDiseaseModel('data/test_heart_disease.csv')
+        global_model.set_weights(new_weights)
+        # Retrain the model with the test data
+        global_model.train('data/test_heart_disease.csv')
+    return jsonify({"status": "success"})
 
-    fl.server.start_server(config=fl.server.ServerConfig(num_rounds=5),
-    strategy=strategy)
+@app.route('/evaluate_global_model', methods=['GET'])
+def evaluate_global():
+    accuracy = global_model.evaluate('data/test_heart_disease.csv')
+    return jsonify({"accuracy": accuracy})
 
-    global_params = strategy.latest_parameters
-    model = create_model()
-    model = set_model_params(model, global_params)
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        file_path = request.json['file_path']
+        data = pd.read_csv(file_path)
+        
+        # Scale the features
+        X_scaled = global_model.scaler.transform(data)
+        
+        # Make predictions
+        predictions = global_model.model.predict(X_scaled).tolist()
+        
+        return jsonify({"predictions": predictions})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-    model.predict([""])
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000) 

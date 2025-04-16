@@ -1,9 +1,9 @@
-flwr>=1.4.0
-wandb>=0.15.0
-scikit-learn>=1.0.0
+streamlit>=1.0.0
 pandas>=1.0.0
 numpy>=1.20.0
-streamlit>=1.0.0
+scikit-learn>=1.0.0
 flask>=2.0.0
-tqdm>=4.65.0
-requests>=2.28.0 
+requests>=2.28.0
+python-dotenv>=0.19.0
+joblib>=1.0.0
+sqlite3 

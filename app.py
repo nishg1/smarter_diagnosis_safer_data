@@ -1,25 +1,17 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import os
 from datetime import datetime
-import wandb
+import requests
+from model import HeartDiseaseModel
 from database import (
     create_user, verify_user, get_user_profile, update_profile,
-    log_action, get_user_actions, save_document, get_user_documents
+    log_action, get_user_actions
 )
-from local_training import load_client_data, train_model, evaluate_model
-from model import create_model
-import flwr as fl
-import threading
-from tqdm import tqdm
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, log_loss
-import requests
-import json
 
 # Set page configuration
 st.set_page_config(
-    page_title="Medical Analysis App",
+    page_title="Federated Learning for Heart Disease Prediction",
     page_icon="🏥",
     layout="wide"
 )
@@ -35,6 +27,8 @@ if 'username' not in st.session_state:
     st.session_state.username = None
 if 'user_id' not in st.session_state:
     st.session_state.user_id = None
+if 'local_model' not in st.session_state:
+    st.session_state.local_model = None
 
 def login_page():
     st.title("Login")
@@ -81,8 +75,122 @@ def register_page():
                 else:
                     st.error("Username or email already exists!")
 
+def train_local_model(uploaded_file):
+    # Save the uploaded file
+    file_path = os.path.join('uploads', f"{st.session_state.user_id}_{uploaded_file.name}")
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    
+    # Log the document upload
+    log_action(
+        st.session_state.user_id,
+        "document_upload",
+        {"filename": uploaded_file.name, "type": uploaded_file.type}
+    )
+    
+    # Initialize and train model
+    model = HeartDiseaseModel()
+    
+    # Show progress
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    # Train model
+    model.train(file_path)
+    progress_bar.progress(100)
+    status_text.text("Training completed!")
+    
+    st.session_state.local_model = model
+    
+    # Evaluate local model
+    accuracy = model.evaluate('data/test_heart_disease.csv')
+    st.success(f"Local model trained successfully! Test accuracy: {accuracy:.2f}%")
+    
+    # Log the training event
+    log_action(
+        st.session_state.user_id,
+        "model_training",
+        {"accuracy": accuracy, "filename": uploaded_file.name}
+    )
+    
+    # Submit weights to server
+    weights = model.get_weights()
+    
+    try:
+        response = requests.post('http://localhost:5000/submit_weights', 
+                               json={'weights': weights})
+        if response.status_code == 200:
+            st.success("Model weights submitted to server successfully!")
+        else:
+            st.error("Failed to submit weights to server")
+    except Exception as e:
+        st.error(f"Error connecting to server: {str(e)}")
+
+def document_upload_page():
+    st.title("Document Upload and Training")
+    
+    if not st.session_state.authenticated:
+        st.warning("Please login first to upload documents.")
+        return
+    
+    st.write("""
+    ### Upload your dataset
+    Upload your data file to train a local model. The system will automatically process your data and train a model.
+    """)
+    
+    uploaded_file = st.file_uploader("Choose a file", type=['csv', 'txt', 'xlsx', 'xls'])
+    
+    if uploaded_file is not None:
+        if st.button("Train Model"):
+            train_local_model(uploaded_file)
+
+def inference_page():
+    st.title("Model Inference")
+    
+    if not st.session_state.authenticated:
+        st.warning("Please login first to use the inference service.")
+        return
+    
+    st.write("""
+    ### Upload data for prediction
+    Upload your data file to get predictions from the global model.
+    """)
+    
+    uploaded_file = st.file_uploader("Choose a file", type=['csv'])
+    
+    if uploaded_file is not None:
+        # Save the uploaded file
+        file_path = os.path.join('uploads', f"{st.session_state.user_id}_inference_{uploaded_file.name}")
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        
+        try:
+            # Get predictions from the global model
+            response = requests.post('http://localhost:5000/predict', 
+                                   json={'file_path': file_path})
+            
+            if response.status_code == 200:
+                predictions = response.json()['predictions']
+                
+                # Display predictions
+                st.subheader("Predictions")
+                data = pd.read_csv(file_path)
+                data['Predicted Target'] = predictions
+                st.dataframe(data)
+                
+                # Log the inference event
+                log_action(
+                    st.session_state.user_id,
+                    "inference",
+                    {"filename": uploaded_file.name, "num_predictions": len(predictions)}
+                )
+            else:
+                st.error("Failed to get predictions from the server")
+        except Exception as e:
+            st.error(f"Error connecting to server: {str(e)}")
+
 def profile_page():
-    st.title("Profile")
+    st.title("User Profile")
     
     if st.session_state.username:
         profile = get_user_profile(st.session_state.username)
@@ -110,225 +218,7 @@ def profile_page():
                         st.write(f"Details: {action['details']}")
                     st.write("---")
 
-def document_upload_page():
-    st.title("Document Upload")
-    
-    if not st.session_state.authenticated:
-        st.warning("Please login first to upload documents.")
-        return
-    
-    uploaded_file = st.file_uploader("Choose a file", type=['csv', 'xlsx', 'xls', 'json'])
-    
-    if uploaded_file is not None:
-        # Save the file
-        file_path = os.path.join('uploads', f"{st.session_state.user_id}_{uploaded_file.name}")
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        
-        # Save document info to database
-        save_document(
-            st.session_state.user_id,
-            uploaded_file.name,
-            uploaded_file.type,
-            file_path
-        )
-        
-        # Initialize Weights & Biases for this client
-        wandb.login(key="0bfff8cb0cebdb5ac084581e40317fae5f12cc1a")
-        wandb.init(
-            project="federated_learning_heart_disease",
-            name=f"client_{st.session_state.username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            config={
-                "client_id": st.session_state.user_id,
-                "username": st.session_state.username
-            }
-        )
-        
-        # Create a progress bar in the UI
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        
-        # Store user info and file path in variables to pass to thread
-        user_id = st.session_state.user_id
-        username = st.session_state.username
-        
-        # Start federated learning client in a separate thread
-        def start_federated_client(user_id, username, file_path):
-            class HospitalClient(fl.client.NumPyClient):
-                def __init__(self, client_id, username, file_path):
-                    self.client_id = client_id
-                    self.username = username
-                    self.model = create_model()
-                    self.X_train, self.X_test, self.y_train, self.y_test = load_client_data(file_path)
-                    self.progress = 0
-                
-                def get_parameters(self, config):
-                    # For HistGradientBoostingClassifier, we need to get the model's state
-                    # We'll use the model's state_dict() method if available, or create a custom state
-                    try:
-                        # Try to get the model's state
-                        state = self.model.get_params()
-                        return [state]
-                    except AttributeError:
-                        # If get_params() is not available, return a simple state
-                        return [{"model_type": "HistGradientBoostingClassifier"}]
-                
-                def set_parameters(self, parameters):
-                    # For HistGradientBoostingClassifier, we need to set the model's state
-                    # We'll use the model's set_params() method if available
-                    try:
-                        self.model.set_params(**parameters[0])
-                    except AttributeError:
-                        # If set_params() is not available, create a new model
-                        self.model = create_model()
-                
-                def fit(self, parameters, config):
-                    self.set_parameters(parameters)
-                    
-                    # Update progress
-                    self.progress = 0
-                    progress_bar.progress(self.progress)
-                    status_text.text("Starting local training...")
-                    
-                    # Train model with progress tracking
-                    for epoch in tqdm(range(100), desc="Training Progress"):
-                        self.model = train_model(self.model, self.X_train, self.y_train)
-                        self.progress = (epoch + 1) / 100
-                        progress_bar.progress(self.progress)
-                        status_text.text(f"Training epoch {epoch + 1}/100")
-                    
-                    # Calculate all metrics
-                    y_pred = self.model.predict(self.X_train)
-                    y_pred_proba = self.model.predict_proba(self.X_train)
-                    
-                    metrics = {
-                        "training_accuracy": accuracy_score(self.y_train, y_pred),
-                        "training_precision": precision_score(self.y_train, y_pred),
-                        "training_recall": recall_score(self.y_train, y_pred),
-                        "training_f1": f1_score(self.y_train, y_pred),
-                        "training_roc_auc": roc_auc_score(self.y_train, y_pred_proba[:, 1]),
-                        "training_log_loss": log_loss(self.y_train, y_pred_proba),
-                        "client_id": self.client_id,
-                        "username": self.username,
-                        "timestamp": datetime.now().isoformat()
-                    }
-                    
-                    # Log metrics to Weights & Biases
-                    wandb.log(metrics)
-                    
-                    # Send parameters to server through API
-                    params = self.get_parameters(config)
-                    try:
-                        response = requests.post(
-                            "http://localhost:8080/update_parameters",
-                            json={
-                                "client_id": self.client_id,
-                                "username": self.username,
-                                "parameters": params
-                            }
-                        )
-                        if response.status_code != 200:
-                            st.error("Failed to send parameters to server")
-                    except Exception as e:
-                        st.error(f"Error sending parameters to server: {str(e)}")
-                    
-                    return params, len(self.X_train), {}
-                
-                def evaluate(self, parameters, config):
-                    self.set_parameters(parameters)
-                    
-                    # Calculate all metrics
-                    y_pred = self.model.predict(self.X_test)
-                    y_pred_proba = self.model.predict_proba(self.X_test)
-                    
-                    metrics = {
-                        "test_accuracy": accuracy_score(self.y_test, y_pred),
-                        "test_precision": precision_score(self.y_test, y_pred),
-                        "test_recall": recall_score(self.y_test, y_pred),
-                        "test_f1": f1_score(self.y_test, y_pred),
-                        "test_roc_auc": roc_auc_score(self.y_test, y_pred_proba[:, 1]),
-                        "test_log_loss": log_loss(self.y_test, y_pred_proba),
-                        "client_id": self.client_id,
-                        "username": self.username,
-                        "timestamp": datetime.now().isoformat()
-                    }
-                    
-                    # Log metrics to Weights & Biases
-                    wandb.log(metrics)
-                    
-                    return float(1 - metrics["test_accuracy"]), len(self.X_test), {
-                        "accuracy": metrics["test_accuracy"],
-                        "client_id": self.client_id,
-                        "metrics": metrics
-                    }
-            
-            client = HospitalClient(user_id, username, file_path)
-            fl.client.start_numpy_client(server_address="localhost:8080", client=client)
-            wandb.finish()
-        
-        # Start the client in a separate thread with user info and file path
-        client_thread = threading.Thread(target=start_federated_client, args=(user_id, username, file_path))
-        client_thread.start()
-        
-        # Log the action
-        log_action(
-            st.session_state.user_id,
-            "document_upload",
-            {"filename": uploaded_file.name, "type": uploaded_file.type}
-        )
-        
-        st.success(f"File {uploaded_file.name} uploaded successfully! Training has started in the background.")
-        
-        # Show uploaded documents
-        st.subheader("Your Uploaded Documents")
-        documents = get_user_documents(st.session_state.user_id)
-        for doc in documents:
-            st.write(f"**{doc['filename']}** - {doc['upload_date']}")
-            st.write(f"Type: {doc['type']}")
-            st.write("---")
-
-def inference_page():
-    st.title("Inference")
-    
-    # File upload section
-    st.subheader("Upload Data for Inference")
-    uploaded_file = st.file_uploader("Choose a file for inference", type=['csv', 'xlsx', 'xls', 'json'])
-    
-    if uploaded_file is not None:
-        # Save the file temporarily
-        file_path = os.path.join('uploads', f"temp_{st.session_state.user_id}_{uploaded_file.name}")
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        
-        # Display file preview
-        if uploaded_file.type == 'text/csv':
-            df = pd.read_csv(uploaded_file)
-            st.write("File Preview:")
-            st.dataframe(df.head())
-        elif uploaded_file.type in ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel']:
-            df = pd.read_excel(uploaded_file)
-            st.write("File Preview:")
-            st.dataframe(df.head())
-        
-        # Inference options (to be implemented based on specific requirements)
-        st.subheader("Inference Options")
-        # Add your inference options here
-        
-        if st.button("Run Inference"):
-            # Log the inference action
-            log_action(
-                st.session_state.user_id,
-                "inference_run",
-                {"filename": uploaded_file.name, "type": uploaded_file.type}
-            )
-            st.success("Inference completed successfully!")
-            
-            # Display results (to be implemented based on specific requirements)
-            st.subheader("Results")
-            st.write("Results will be displayed here")
-
 def main_app():
-    # Add a sidebar
     st.sidebar.title("Navigation")
     
     if st.session_state.authenticated:
