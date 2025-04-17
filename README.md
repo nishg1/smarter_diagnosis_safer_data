@@ -1,4 +1,4 @@
-# federated_learning_hospital_data
+# Smarter Diagnosis, Safer Data
 
 There is untapped potential in being able to combine multiple hospitals' patient data in order to create a robust model trained on a very large set of data. A key concern is, understandably, patient privacy. To address this, our model uses federated learning, where a local model is trained on an individual hospital's patient data. Subsequently, each set of parameters are sent to the global model. Sensitive patient data cannot be accessed by individual hospitals in our interface, while simultaneously, the user still benefits from having access to a huge model. 
 
