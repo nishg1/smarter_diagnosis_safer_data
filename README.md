@@ -10,7 +10,7 @@ Mirelle George
 Nishka Govil
 Metehan Berker
 
-How to run the project:
+## How to run the project:
 
 pip install -r requirements.txt
 
