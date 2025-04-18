@@ -8,7 +8,7 @@ from sklearn.impute import SimpleImputer
 
 
 def load_client_data(client_id):
-    path = f"hospital_{client_id}.csv"
+    path = f"data/train_heart_disease_{client_id}.csv"
     if not os.path.exists(path):
         raise FileNotFoundError(f"No data found for client {client_id} at {path}")
 
