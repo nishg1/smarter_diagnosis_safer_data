@@ -9,3 +9,15 @@ Team Members:
 Mirelle George
 Nishka Govil
 Metehan Berker
+
+How to run the project:
+
+pip install -r requirements.txt
+
+python server.py
+
+In another terminal tab, run at least 2 clients:
+
+python -c "from client import start_client; start_client(client_id)" 
+
+(client_id can be any number between 1-4)
